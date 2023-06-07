@@ -87,8 +87,6 @@ Corrected <-
   select( Species = SpeciesNameCleaned, Month, Day ) %>%
   na.omit()  # cleaned up the missing ones
 
-
-
 # inspect the data after the join
 head(Corrected)
 ```
@@ -100,20 +98,28 @@ We want to identify the top 5-6 bird species sighted at the Katherine Ordway Nat
 
 ```{r}
 # count sightings by species in descending order
-OrdwaySpeciesNames %>%
-  arrange( desc(SpeciesNameCleaned) )
+bird_sightings <-
+  Corrected %>%
+  group_by( Species ) %>%
+  summarise( count = n() )
 
+tail(bird_sightings)
 # a hint in the text book recommends displaying the top 10 species to choose our threshold
-Top_10_Species_Name <-
-  OrdwaySpeciesNames %>%
-  arrange( SpeciesNameCleaned )
+Majors <-
+  bird_sightings %>%
+  arrange( desc(count) ) %>%
+  slice( 1:10 )
+
+head(Majors, 10)
 
 # define a sightings threshold; produce a table with only birds belonging to major species
-Majors <-
-  OrdwaySpeciesNames %>%
-  arrange( SpeciesNameCleaned )
+threshold <- 790
+major_selected_birds <-
+  Majors %>%
+  filter( count >= threshold )
 
-head(Majors)
+head(major_selected_birds)
+
 ```
 
 
@@ -123,11 +129,11 @@ We now want to produce a month-by-month count for each of the major species, and
 
 ```{r}
 # prepare glyph-ready data table called `ByMonth`
-ByMonth <-
-  OrdwaySpeciesNames %>%
-  group_by( Month, SpeciesName ) %>%
-  summarise( count = n_distinct( SpeciesName ),
-             Species = n_distinct( SpeciesNameCleaned ) )
+ByMonth <- 
+  Corrected %>%
+  group_by( Species, Month ) %>%
+  summarise( count = n() ) %>%
+  filter( Species %in% major_selected_birds$Species )
 ```
 
 Now use the ggplot template below to generate the desired graph. (Remark you can also use esquisser or mplot to create a line chart instead of the barchart)
@@ -138,6 +144,7 @@ Now use the ggplot template below to generate the desired graph. (Remark you can
 # ggplot commands
 
 ByMonth %>% 
+  mutate( Month = as.numeric(Month) ) %>%
   ggplot(aes(x = Month, y = count, color = Species)) + 
   geom_line()
 
@@ -149,22 +156,24 @@ ByMonth %>% ggplot(aes(x=Month,y=count ,fill=Species)) +
 According to the graph, we can answer the questions posed:
 
 ##### 1. Which species are present year-round?  
-
+American Goldfinch and Black-capped Chickadee
 
 
 ##### 2. Which species are migratory, that is, primarily present in one or two seasons?
-
-
-
+Slate-colored Junco
 
 ##### 3. What is the peak month for each major species? (bullet list)
-
-
+* Bird Month Activity
+- American Goldfinch = 10th month
+- Black-capped Chickadee = 10.9 month
+- Field Sparrow = 5th month
+- Lincoln's Sparrow = 10th month
+- Slate-colored Junco = 10th month
+- Tree Swallow = 3.73th month
 
 
 ##### 4. Which major species are seen in good numbers for at least 6 months of the year?
-
-
+American Goldfinch
 
 ```{r}
 
